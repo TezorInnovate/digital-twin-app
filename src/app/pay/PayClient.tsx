@@ -1,7 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function PayClient() {
   const [upi, setUpi] = useState("");
@@ -9,9 +8,25 @@ export default function PayClient() {
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search); // client-only
-    setUpi(searchParams.get("upi") || "");
-    setName(searchParams.get("name") || "");
+    // 1️⃣ Read from URL first
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlUpi = searchParams.get("upi");
+    const urlName = searchParams.get("name");
+
+    if (urlUpi && urlName) {
+      setUpi(urlUpi);
+      setName(urlName);
+
+      // 2️⃣ Save to localStorage
+      localStorage.setItem("upi", urlUpi);
+      localStorage.setItem("name", urlName);
+    } else {
+      // 3️⃣ Fallback to localStorage if URL is empty (reload case)
+      const storedUpi = localStorage.getItem("upi") || "";
+      const storedName = localStorage.getItem("name") || "";
+      setUpi(storedUpi);
+      setName(storedName);
+    }
   }, []);
 
   const handlePay = () => {
