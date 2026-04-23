@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Html5Qrcode } from "html5-qrcode";
 
 export default function ScanPage() {
   const [data, setData] = useState<string | null>(null);
   const router = useRouter();
+  const hasScanned = useRef(false); // Prevent multiple scans
 
   useEffect(() => {
     const scanner = new Html5Qrcode("reader");
@@ -19,16 +20,21 @@ export default function ScanPage() {
           qrbox: { width: 250, height: 250 },
         },
         async (decodedText) => {
+          if (hasScanned.current) return; // Stop duplicate triggers
+          hasScanned.current = true;
+
           setData(decodedText);
 
           const parsed = parseUPI(decodedText);
 
           if (parsed?.upi) {
             try {
-              await scanner.stop();
+              await scanner.stop(); // Stop camera safely
 
               router.push(
-                `/pay?upi=${encodeURIComponent(parsed.upi)}&name=${encodeURIComponent(parsed.name || "")}`
+                `/pay?upi=${encodeURIComponent(parsed.upi)}&name=${encodeURIComponent(
+                  parsed.name || ""
+                )}`
               );
             } catch (err) {
               console.error("Scanner stop error:", err);
@@ -51,7 +57,6 @@ export default function ScanPage() {
   const parseUPI = (qrData: string) => {
     try {
       const url = new URL(qrData);
-
       return {
         upi: url.searchParams.get("pa"),
         name: url.searchParams.get("pn"),
@@ -71,14 +76,20 @@ export default function ScanPage() {
 
       {data && (
         <div className="mt-4">
-          <p><strong>Raw Data:</strong> {data}</p>
+          <p>
+            <strong>Raw Data:</strong> {data}
+          </p>
         </div>
       )}
 
       {parsed && (
         <div className="mt-4">
-          <p><strong>UPI ID:</strong> {parsed.upi}</p>
-          <p><strong>Name:</strong> {parsed.name}</p>
+          <p>
+            <strong>UPI ID:</strong> {parsed.upi}
+          </p>
+          <p>
+            <strong>Name:</strong> {parsed.name}
+          </p>
         </div>
       )}
     </div>

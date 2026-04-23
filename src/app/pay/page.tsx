@@ -5,7 +5,7 @@ import PayClient from "./PayClient";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading payment...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <PayClient />
     </Suspense>
   );
