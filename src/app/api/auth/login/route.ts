@@ -26,9 +26,13 @@ export async function POST(req: Request) {
 
     // Existing user
     if (!user.devices.includes(deviceId)) {
+      // Add new device after approval
+      user.devices.push(deviceId);
+      await user.save();
+        
       return NextResponse.json({
         success: true,
-        message: "New device detected",
+        message: "New device approved and added",
         newDevice: true,
       });
     }

@@ -51,11 +51,11 @@ export default function LoginPage() {
   const handleVerifyOTP = async () => {
       try {
         const confirmationResult = (window as any).confirmationResult;
-    
+
         await confirmationResult.confirm(otp);
-    
+
         const deviceId = getDeviceId();
-    
+
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
@@ -66,15 +66,15 @@ export default function LoginPage() {
             deviceId,
           }),
         });
-    
+
         const data = await res.json();
-    
+
         if (data.newDevice) {
-          alert("⚠️ New device detected! OTP verification required.");
+          alert("✅ New device verified and added successfully!");
         } else {
           alert("Login successful!");
         }
-    
+
       } catch (error) {
         console.error(error);
         alert("Invalid OTP");
