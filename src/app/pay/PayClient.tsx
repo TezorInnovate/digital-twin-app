@@ -1,3 +1,4 @@
+// /app/pay/PayClient.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -5,7 +6,6 @@ import { useState, useEffect } from "react";
 
 export default function PayClient() {
   const searchParams = useSearchParams();
-
   const [upi, setUpi] = useState("");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
