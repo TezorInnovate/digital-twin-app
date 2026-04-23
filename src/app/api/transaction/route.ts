@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import Transaction from "@/models/Transaction";
 import User from "@/models/User";
 import { calculateRiskScore } from "@/utils/fraud";
+import { checkUpiFraud } from "@/utils/mlModel";
 
 export async function POST(req: Request) {
   try {
@@ -30,11 +31,17 @@ export async function POST(req: Request) {
       recentTransactions,
     });
 
-    // Decide transaction status based on risk
-    let status: "SUCCESS" | "WARNING" | "BLOCKED" = "SUCCESS";
+    // ML-based check
+    const mlResult = checkUpiFraud(upi);
 
-    if (riskScore >= 70) status = "BLOCKED";
-    else if (riskScore >= 30) status = "WARNING";
+    // Combine risk
+    const finalRiskScore = riskScore + mlResult.mlRisk;
+
+    // Decide transaction status based on risk
+    let status = "SUCCESS";
+
+    if (finalRiskScore >= 70) status = "BLOCKED";
+    else if (finalRiskScore >= 30) status = "WARNING";
 
     // Create the transaction
     const txn = await Transaction.create({
@@ -43,16 +50,16 @@ export async function POST(req: Request) {
       name,
       amount,
       deviceId,
-      riskScore,
+      riskScore: finalRiskScore,
       status,
     });
 
     return NextResponse.json({
       success: true,
       message: "Transaction processed",
-      txnId: txn._id,
       status,
-      riskScore,
+      riskScore: finalRiskScore,
+      mlFraud: mlResult.isFraud,
     });
 
   } catch (error) {
