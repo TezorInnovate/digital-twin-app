@@ -38,7 +38,7 @@ export default function PayClient() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userPhone: "demo-user", // will replace later
+          userPhone: "demo-user", // replace later with actual user
           upi,
           name,
           amount: Number(amount),
@@ -49,7 +49,16 @@ export default function PayClient() {
       const data = await res.json();
 
       if (data.success) {
-        alert("✅ Transaction initiated!");
+        // New logic based on transaction status
+        if (data.status === "SUCCESS") {
+          alert(`✅ Payment Successful (Risk: ${data.riskScore})`);
+        } else if (data.status === "WARNING") {
+          alert(`⚠️ Suspicious Transaction (Risk: ${data.riskScore})`);
+        } else if (data.status === "BLOCKED") {
+          alert(`❌ Transaction Blocked (Risk: ${data.riskScore})`);
+        } else {
+          alert("✅ Transaction initiated, status unknown");
+        }
       } else {
         alert("❌ Transaction failed");
       }
