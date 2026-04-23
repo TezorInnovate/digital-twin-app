@@ -4,16 +4,15 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function PayClient() {
-  const searchParams = useSearchParams();
   const [upi, setUpi] = useState("");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    if (!searchParams) return; // guard
+    const searchParams = new URLSearchParams(window.location.search); // client-only
     setUpi(searchParams.get("upi") || "");
     setName(searchParams.get("name") || "");
-  }, [searchParams]);
+  }, []);
 
   const handlePay = () => {
     if (!amount) return alert("Enter amount");

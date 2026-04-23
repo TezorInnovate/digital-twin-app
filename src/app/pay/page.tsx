@@ -1,6 +1,6 @@
 // /app/pay/page.tsx
-"use client"; // make the page a client component
-export const dynamic = "force-dynamic"; // disable server-side prerender
+"use client"; // must be client
+export const dynamic = "force-dynamic"; // disables static & SSR
 
 import PayClient from "./PayClient";
 
