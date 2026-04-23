@@ -1,5 +1,5 @@
 // /app/pay/page.tsx
-"use client"; // 🔑 mark as client component
+"use client";
 
 import PayClient from "./PayClient";
 
