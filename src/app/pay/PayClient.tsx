@@ -8,7 +8,6 @@ export default function PayClient() {
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
-    // 1️⃣ Read from URL first
     const searchParams = new URLSearchParams(window.location.search);
     const urlUpi = searchParams.get("upi");
     const urlName = searchParams.get("name");
@@ -17,11 +16,9 @@ export default function PayClient() {
       setUpi(urlUpi);
       setName(urlName);
 
-      // 2️⃣ Save to localStorage
       localStorage.setItem("upi", urlUpi);
       localStorage.setItem("name", urlName);
     } else {
-      // 3️⃣ Fallback to localStorage if URL is empty (reload case)
       const storedUpi = localStorage.getItem("upi") || "";
       const storedName = localStorage.getItem("name") || "";
       setUpi(storedUpi);
@@ -29,14 +26,43 @@ export default function PayClient() {
     }
   }, []);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!amount) return alert("Enter amount");
-    alert(`Paying ₹${amount} to ${name} (${upi})`);
+
+    try {
+      const deviceId = localStorage.getItem("device_id");
+
+      const res = await fetch("/api/transaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userPhone: "demo-user", // will replace later
+          upi,
+          name,
+          amount: Number(amount),
+          deviceId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("✅ Transaction initiated!");
+      } else {
+        alert("❌ Transaction failed");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("⚠️ Error processing payment");
+    }
   };
 
   return (
     <div className="p-4 max-w-md mx-auto">
       <h1 className="text-xl font-bold mb-4">Payment Page</h1>
+
       <p><strong>UPI:</strong> {upi}</p>
       <p><strong>Name:</strong> {name}</p>
 
