@@ -4,6 +4,7 @@ import Transaction from "@/models/Transaction";
 import User from "@/models/User";
 import { calculateRiskScore } from "@/utils/fraud";
 import { checkUpiFraud } from "@/utils/mlModel";
+import { analyzeUserBehavior } from "@/utils/behavior";
 
 export async function POST(req: Request) {
   try {
@@ -24,6 +25,13 @@ export async function POST(req: Request) {
       createdAt: { $gte: oneMinuteAgo },
     });
 
+    const pastTransactions = await Transaction.countDocuments({
+      userPhone,
+      upi,
+    });
+    
+    const isFrequent = pastTransactions >= 3;
+
     // Calculate risk score
     const riskScore = calculateRiskScore({
       amount,
@@ -34,8 +42,10 @@ export async function POST(req: Request) {
     // ML-based check
     const mlResult = checkUpiFraud(upi);
 
+    const behaviorAdjustment = analyzeUserBehavior({ isFrequent });
+
     // Combine risk
-    const finalRiskScore = riskScore + mlResult.mlRisk;
+    const finalRiskScore = riskScore + mlResult.mlRisk + behaviorAdjustment;
 
     // Decide transaction status based on risk
     let status = "SUCCESS";
