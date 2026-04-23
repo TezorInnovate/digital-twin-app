@@ -1,9 +1,11 @@
+"use client";
+
 import { Suspense } from "react";
 import PayClient from "./PayClient";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading payment...</div>}>
       <PayClient />
     </Suspense>
   );

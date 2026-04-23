@@ -28,9 +28,7 @@ export default function ScanPage() {
               await scanner.stop();
 
               router.push(
-                `/pay?upi=${parsed.upi}&name=${encodeURIComponent(
-                  parsed.name || ""
-                )}`
+                `/pay?upi=${encodeURIComponent(parsed.upi)}&name=${encodeURIComponent(parsed.name || "")}`
               );
             } catch (err) {
               console.error("Scanner stop error:", err);
