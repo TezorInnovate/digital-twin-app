@@ -11,34 +11,42 @@ export default function PayClient() {
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
+    // Populate after hydration
     setUpi(searchParams.get("upi") || "");
     setName(searchParams.get("name") || "");
   }, [searchParams]);
 
   const handlePay = () => {
+    if (!amount) {
+      alert("Enter amount");
+      return;
+    }
     alert(`Paying ₹${amount} to ${name} (${upi})`);
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">Payment Page</h1>
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-xl font-bold mb-4">Payment Page</h1>
 
       <p><strong>UPI:</strong> {upi}</p>
       <p><strong>Name:</strong> {name}</p>
 
-      <input
-        type="number"
-        placeholder="Enter amount"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        className="border p-2 mt-3 w-full"
-      />
+      <div className="mt-4">
+        <label className="block mb-1">Enter Amount</label>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="₹0"
+          className="border p-2 w-full rounded"
+        />
+      </div>
 
       <button
         onClick={handlePay}
-        className="bg-blue-600 text-white px-4 py-2 mt-3 w-full"
+        className="mt-4 w-full bg-blue-600 text-white py-2 rounded"
       >
-        Pay
+        Pay Now
       </button>
     </div>
   );
