@@ -27,9 +27,7 @@ export default function Navbar() {
       // Preserve device_id, remove user info
       const deviceId = localStorage.getItem("device_id");
       localStorage.clear();
-      if (deviceId) {
-        localStorage.setItem("device_id", deviceId);
-      }
+      if (deviceId) localStorage.setItem("device_id", deviceId);
 
       // Redirect to login page
       router.push("/login");
@@ -39,20 +37,37 @@ export default function Navbar() {
     }
   };
 
+  const navItems = [
+    { label: "Dashboard", path: "/" },
+    { label: "Scan QR", path: "/scan" },
+    { label: "Import CSV", path: "/import-csv" },
+  ];
+
   return (
     <nav className="w-full bg-black text-white px-6 py-4 flex justify-between items-center shadow-md">
-      
       {/* Left side */}
-      <h1 className="text-2xl font-bold tracking-wide">
+      <h1 className="text-2xl font-bold tracking-wide cursor-pointer" onClick={() => router.push("/")}>
         Digital Twin
       </h1>
 
       {/* Right side */}
-      <div className="flex items-center gap-4">
-        <div className="text-sm opacity-80">
+      <div className="flex items-center gap-6">
+        {/* Navigation links */}
+        {navItems.map((item) => (
+          <button
+            key={item.path}
+            onClick={() => router.push(item.path)}
+            className="text-sm hover:opacity-70"
+          >
+            {item.label}
+          </button>
+        ))}
+
+        <div className="text-sm opacity-80 hidden sm:block">
           Secure Financial Mirror
         </div>
 
+        {/* Login/Logout */}
         {user ? (
           <button
             onClick={handleLogout}
@@ -61,12 +76,14 @@ export default function Navbar() {
             Logout
           </button>
         ) : (
-          <a href="/login" className="text-sm underline hover:opacity-70">
+          <button
+            onClick={() => router.push("/login")}
+            className="text-sm underline hover:opacity-70"
+          >
             Login
-          </a>
+          </button>
         )}
       </div>
-
     </nav>
   );
 }
