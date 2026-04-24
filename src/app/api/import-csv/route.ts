@@ -1,4 +1,3 @@
-// /api/import-csv/route.ts
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
@@ -12,12 +11,10 @@ export async function POST(req: Request) {
     const { phone, initialBalance, transactions } = await req.json();
 
     let user = await User.findOne({ phone });
-
     if (!user) {
       user = await User.create({ phone, devices: ["csv-import"] });
     }
 
-    // Optional initial balance transaction
     if (initialBalance && initialBalance > 0) {
       await Transaction.create({
         userPhone: phone,
@@ -26,19 +23,19 @@ export async function POST(req: Request) {
         category: "Balance",
         status: "SUCCESS",
         deviceId: "csv-import",
+        createdAt: new Date(),
       });
     }
 
-    // Insert CSV transactions
     const txnDocs = transactions.map((t: any) => ({
       userPhone: phone,
       name: t.person_name,
       upi: t.upi_id,
       amount: Number(t.amount),
       category: t.category || "",
-      status: t.type === "Paid" ? "SUCCESS" : "SUCCESS", // you can customize
-      createdAt: dayjs(`${t.date} ${t.time}`, "DD-MMM hh:mm A").toDate(), // parse date + time
+      status: t.type === "Paid" ? "SUCCESS" : "SUCCESS",
       deviceId: "csv-import",
+      createdAt: dayjs(`${t.date} ${t.time}`, "DD-MMM hh:mm A").toDate(),
     }));
 
     await Transaction.insertMany(txnDocs);
