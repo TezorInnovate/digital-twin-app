@@ -16,10 +16,17 @@ export default function Home() {
   const [totalSpending, setTotalSpending] = useState(0);
   const [topPayments, setTopPayments] = useState<string[]>([]);
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
+  const [userPhone, setUserPhone] = useState<string | null>(null);
 
-  const userPhone = localStorage.getItem("user") 
-    ? JSON.parse(localStorage.getItem("user")!).phone
-    : null;
+  // Only access localStorage on client side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUserPhone(JSON.parse(storedUser).phone);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!userPhone) return;
@@ -31,17 +38,17 @@ export default function Home() {
 
         setTransactions(data);
 
-        // Balance
+        // Calculate balance
         const bal = data.reduce((acc, txn) => acc + txn.amount, 0);
         setBalance(bal);
 
-        // Total Spending (sum of negative amounts)
+        // Total spending (sum of negative amounts)
         const spending = data
           .filter((txn) => txn.amount < 0)
           .reduce((acc, txn) => acc + Math.abs(txn.amount), 0);
         setTotalSpending(spending);
 
-        // Top Payment Names
+        // Top payment names
         const paymentCounts: Record<string, number> = {};
         data.forEach((txn) => {
           if (!paymentCounts[txn.name]) paymentCounts[txn.name] = 0;
@@ -56,8 +63,9 @@ export default function Home() {
         // Category stats
         const categoryMap: Record<string, number> = {};
         data.forEach((txn) => {
-          if (!categoryMap[txn.category]) categoryMap[txn.category] = 0;
-          categoryMap[txn.category] += txn.amount;
+          const cat = txn.category || "Uncategorized";
+          if (!categoryMap[cat]) categoryMap[cat] = 0;
+          categoryMap[cat] += txn.amount;
         });
         setCategoryStats(categoryMap);
       } catch (err) {
@@ -74,12 +82,20 @@ export default function Home() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={() => router.push("/scan")}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90"
-        >
-          Scan QR
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push("/scan")}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90"
+          >
+            Scan QR
+          </button>
+          <button
+            onClick={() => router.push("/import-csv")}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:opacity-90"
+          >
+            Import CSV
+          </button>
+        </div>
       </div>
 
       {/* Top Cards */}
@@ -108,7 +124,7 @@ export default function Home() {
         <ul className="list-disc pl-5">
           {Object.entries(categoryStats).map(([cat, amt]) => (
             <li key={cat}>
-              {cat || "Uncategorized"}: ₹{Math.abs(amt)}
+              {cat}: ₹{Math.abs(amt)}
             </li>
           ))}
         </ul>
