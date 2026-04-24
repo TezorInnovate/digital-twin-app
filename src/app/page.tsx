@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 type Transaction = {
   name: string;
   amount: number;
-  category?: string;
+  category: string;
   createdAt: string;
 };
 
-export default function Home() {
+export default function DashboardPage() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balance, setBalance] = useState(0);
@@ -21,97 +21,46 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Replace with actual localStorage logic in production
-      setUserPhone("+919773666243"); // Hardcoded for testing
+      // TODO: Replace with localStorage user in production
+      setUserPhone("+919773666243");
     }
   }, []);
 
   useEffect(() => {
-    if (!userPhone) {
-      console.warn("DEBUG: userPhone is null, skipping fetch");
-      return;
-    }
+    if (!userPhone) return;
 
-    const fetchTransactions = async () => {
+    const fetchDashboard = async () => {
       try {
-        console.log("DEBUG: Fetching transactions for userPhone:", userPhone);
-        const res = await fetch(`/api/transaction?userPhone=${userPhone}`);
-        if (!res.ok) {
-          console.error("DEBUG: Fetch failed with status:", res.status);
-          return;
-        }
+        console.log("DEBUG: Fetching dashboard for userPhone:", userPhone);
 
-        const result = await res.json();
-        console.log("DEBUG: transactions fetched from API:", result);
+        const res = await fetch(`/api/dashboard?userPhone=${userPhone}`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
 
-        // Ensure transactions is always an array
-        const data: Transaction[] = Array.isArray(result.transactions) ? result.transactions : [];
-        console.log(`DEBUG: Processed ${data.length} transactions`);
+        const data = await res.json();
+        console.log("DEBUG: Dashboard API response:", data);
 
-        // Sort newest first
-        const sortedData = data.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        setTransactions(sortedData);
+        if (!data.success) throw new Error(data.message || "API error");
 
-        // Balance
-        const bal = data.reduce((acc, txn) => acc + txn.amount, 0);
-        setBalance(bal);
-        console.log("DEBUG: Calculated balance:", bal);
-
-        // Total spending (sum of negative amounts)
-        const spending = data
-          .filter((txn) => txn.amount < 0)
-          .reduce((acc, txn) => acc + Math.abs(txn.amount), 0);
-        setTotalSpending(spending);
-        console.log("DEBUG: Calculated total spending:", spending);
-
-        // Top payment names
-        const paymentCounts: Record<string, number> = {};
-        data.forEach((txn) => {
-          paymentCounts[txn.name] = (paymentCounts[txn.name] || 0) + 1;
-        });
-        const top = Object.entries(paymentCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name]) => name);
-        setTopPayments(top);
-        console.log("DEBUG: Top payments:", top);
-
-        // Category stats
-        const categoryMap: Record<string, number> = {};
-        data.forEach((txn) => {
-          const cat = txn.category || "Uncategorized";
-          categoryMap[cat] = (categoryMap[cat] || 0) + txn.amount;
-        });
-        setCategoryStats(categoryMap);
-        console.log("DEBUG: Category stats:", categoryMap);
+        setTransactions(data.transactions || []);
+        setBalance(data.balance || 0);
+        setTotalSpending(data.totalSpending || 0);
+        setTopPayments(data.topPayments || []);
+        setCategoryStats(data.categoryStats || {});
       } catch (err) {
-        console.error("DEBUG: Failed to fetch transactions:", err);
+        console.error("DEBUG: Failed to fetch dashboard:", err);
       }
     };
 
-    fetchTransactions();
+    fetchDashboard();
   }, [userPhone]);
 
   return (
     <main className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
-          <button
-            onClick={() => router.push("/scan")}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90"
-          >
-            Scan QR
-          </button>
-          <button
-            onClick={() => router.push("/import-csv")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:opacity-90"
-          >
-            Import CSV
-          </button>
+          <button onClick={() => router.push("/scan")} className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90">Scan QR</button>
+          <button onClick={() => router.push("/import-csv")} className="bg-blue-600 text-white px-4 py-2 rounded hover:opacity-90">Import CSV</button>
         </div>
       </div>
 
@@ -121,27 +70,22 @@ export default function Home() {
           <h2 className="text-gray-500 text-sm">Available Balance</h2>
           <p className="text-3xl font-bold mt-2">₹{balance}</p>
         </div>
+
         <div className="bg-white p-6 rounded-2xl shadow-md border">
           <h2 className="text-gray-500 text-sm">Total Spending</h2>
           <p className="text-3xl font-bold mt-2">₹{totalSpending}</p>
         </div>
       </div>
 
-      {/* Analytics Section */}
+      {/* Top Payments & Category Stats */}
       <div className="bg-white p-6 rounded-2xl shadow-md border">
         <h2 className="text-xl font-bold mb-4">Top Payments</h2>
-        <ul className="list-disc pl-5">
-          {topPayments.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
-        </ul>
+        <ul className="list-disc pl-5">{topPayments.map((name) => <li key={name}>{name}</li>)}</ul>
 
         <h2 className="text-xl font-bold mt-6 mb-2">Category-wise Spending</h2>
         <ul className="list-disc pl-5">
           {Object.entries(categoryStats).map(([cat, amt]) => (
-            <li key={cat}>
-              {cat}: ₹{Math.abs(amt)}
-            </li>
+            <li key={cat}>{cat}: ₹{Math.abs(amt)}</li>
           ))}
         </ul>
       </div>
@@ -170,16 +114,6 @@ export default function Home() {
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Lower Section */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white p-10 rounded-2xl shadow-md border text-center">
-          Gold Market Data
-        </div>
-        <div className="bg-white p-10 rounded-2xl shadow-md border text-center">
-          Stock Market Data
         </div>
       </div>
     </main>
