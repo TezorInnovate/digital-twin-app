@@ -22,15 +22,16 @@ export default function Home() {
   // Only access localStorage on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
-      //const storedUser = localStorage.getItem("user");
-      //if (storedUser) {
-      //  const parsed = JSON.parse(storedUser);
-      //  console.log("DEBUG: Stored user from localStorage:", parsed);
-      //  setUserPhone(parsed.phone);
-      //} else {
-      //  console.warn("DEBUG: No user found in localStorage");
-      //}
-      setUserPhone("+919773666243");
+      // Replace this with actual user from localStorage in production
+      // const storedUser = localStorage.getItem("user");
+      // if (storedUser) {
+      //   const parsed = JSON.parse(storedUser);
+      //   console.log("DEBUG: Stored user from localStorage:", parsed);
+      //   setUserPhone(parsed.phone);
+      // } else {
+      //   console.warn("DEBUG: No user found in localStorage");
+      // }
+      setUserPhone("+919773666243"); // hardcoded for testing
     }
   }, []);
 
@@ -44,18 +45,21 @@ export default function Home() {
       try {
         console.log("DEBUG: Fetching transactions for userPhone:", userPhone);
         const res = await fetch(`/api/transaction?userPhone=${userPhone}`);
+
         if (!res.ok) {
           console.error("DEBUG: Fetch failed with status:", res.status);
           return;
         }
 
-        const data: Transaction[] = await res.json();
-        console.log("DEBUG: Transactions fetched:", data);
+        const result = await res.json();
+        console.log("DEBUG: transactions fetched from API:", result);
 
-        if (!Array.isArray(data)) {
-          console.error("DEBUG: API did not return an array:", data);
+        if (!result.transactions || !Array.isArray(result.transactions)) {
+          console.error("DEBUG: API did not return an array:", result);
           return;
         }
+
+        const data: Transaction[] = result.transactions;
 
         // Sort transactions by newest first
         const sortedData = data.sort(
@@ -95,7 +99,6 @@ export default function Home() {
         });
         setCategoryStats(categoryMap);
         console.log("DEBUG: Category stats:", categoryMap);
-
       } catch (err) {
         console.error("DEBUG: Failed to fetch transactions:", err);
       }
@@ -106,7 +109,6 @@ export default function Home() {
 
   return (
     <main className="p-6 space-y-6">
-
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -190,7 +192,6 @@ export default function Home() {
         <div className="bg-white p-10 rounded-2xl shadow-md border text-center">
           Gold Market Data
         </div>
-
         <div className="bg-white p-10 rounded-2xl shadow-md border text-center">
           Stock Market Data
         </div>
