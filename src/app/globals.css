@@ -1,26 +1,48 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b27;
+  --bg-card: #1a2236;
+  --bg-card-hover: #1e2840;
+  --border: rgba(255,255,255,0.07);
+  --border-accent: rgba(234,179,8,0.3);
+  --gold: #eab308;
+  --gold-light: #fbbf24;
+  --gold-dim: rgba(234,179,8,0.12);
+  --text-primary: #f0f4ff;
+  --text-secondary: #8896b3;
+  --text-muted: #4e5d7a;
+  --success: #10b981;
+  --success-dim: rgba(16,185,129,0.12);
+  --danger: #ef4444;
+  --danger-dim: rgba(239,68,68,0.12);
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --info-dim: rgba(59,130,246,0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(234,179,8,0.2);
+  color: var(--gold-light);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+input, textarea, select {
+  font-family: 'Outfit', sans-serif;
 }
