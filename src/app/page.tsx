@@ -24,35 +24,55 @@ export default function Home() {
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
-        setUserPhone(JSON.parse(storedUser).phone);
+        const parsed = JSON.parse(storedUser);
+        console.log("DEBUG: Stored user from localStorage:", parsed);
+        setUserPhone(parsed.phone);
+      } else {
+        console.warn("DEBUG: No user found in localStorage");
       }
     }
   }, []);
 
   useEffect(() => {
-    if (!userPhone) return;
+    if (!userPhone) {
+      console.warn("DEBUG: userPhone is null, skipping fetch");
+      return;
+    }
 
     const fetchTransactions = async () => {
       try {
+        console.log("DEBUG: Fetching transactions for userPhone:", userPhone);
         const res = await fetch(`/api/transaction?userPhone=${userPhone}`);
+        if (!res.ok) {
+          console.error("DEBUG: Fetch failed with status:", res.status);
+          return;
+        }
+
         const data: Transaction[] = await res.json();
+        console.log("DEBUG: Transactions fetched:", data);
+
+        if (!Array.isArray(data)) {
+          console.error("DEBUG: API did not return an array:", data);
+          return;
+        }
 
         // Sort transactions by newest first
         const sortedData = data.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-
         setTransactions(sortedData);
 
         // Calculate balance
         const bal = data.reduce((acc, txn) => acc + txn.amount, 0);
         setBalance(bal);
+        console.log("DEBUG: Calculated balance:", bal);
 
         // Total spending (sum of negative amounts)
         const spending = data
           .filter((txn) => txn.amount < 0)
           .reduce((acc, txn) => acc + Math.abs(txn.amount), 0);
         setTotalSpending(spending);
+        console.log("DEBUG: Calculated total spending:", spending);
 
         // Top payment names
         const paymentCounts: Record<string, number> = {};
@@ -64,6 +84,7 @@ export default function Home() {
           .slice(0, 5)
           .map(([name]) => name);
         setTopPayments(top);
+        console.log("DEBUG: Top payments:", top);
 
         // Category stats
         const categoryMap: Record<string, number> = {};
@@ -72,8 +93,10 @@ export default function Home() {
           categoryMap[cat] = (categoryMap[cat] || 0) + txn.amount;
         });
         setCategoryStats(categoryMap);
+        console.log("DEBUG: Category stats:", categoryMap);
+
       } catch (err) {
-        console.error("Failed to fetch transactions:", err);
+        console.error("DEBUG: Failed to fetch transactions:", err);
       }
     };
 
