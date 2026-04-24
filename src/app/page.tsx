@@ -22,14 +22,15 @@ export default function Home() {
   // Only access localStorage on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        console.log("DEBUG: Stored user from localStorage:", parsed);
-        setUserPhone(parsed.phone);
-      } else {
-        console.warn("DEBUG: No user found in localStorage");
-      }
+      //const storedUser = localStorage.getItem("user");
+      //if (storedUser) {
+      //  const parsed = JSON.parse(storedUser);
+      //  console.log("DEBUG: Stored user from localStorage:", parsed);
+      //  setUserPhone(parsed.phone);
+      //} else {
+      //  console.warn("DEBUG: No user found in localStorage");
+      //}
+      setUserPhone("+919773666243");
     }
   }, []);
 
