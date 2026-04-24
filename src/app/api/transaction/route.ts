@@ -6,7 +6,7 @@ import { calculateRiskScore } from "@/utils/fraud";
 import { checkUpiFraud } from "@/utils/mlModel";
 import { analyzeUserBehavior } from "@/utils/behavior";
 
-// Helper function to handle GET
+// Helper function to handle GET requests
 async function handleGet(req: Request) {
   try {
     await connectDB();
@@ -14,27 +14,39 @@ async function handleGet(req: Request) {
     const url = new URL(req.url);
     const userPhone = url.searchParams.get("userPhone");
 
+    console.log("DEBUG: Received GET request for transactions");
+    console.log("DEBUG: userPhone query parameter:", userPhone);
+
     if (!userPhone) {
+      console.warn("DEBUG: Missing userPhone in query");
       return NextResponse.json(
         { success: false, message: "userPhone query parameter is required" },
         { status: 400 }
       );
     }
 
-    // Fetch all transactions for the user
-    const transactions = await Transaction.find({ userPhone }).sort({ createdAt: -1 });
+    // Robust query: trims whitespace, case-insensitive match
+    const transactions = await Transaction.find({
+      userPhone: { $regex: `^${userPhone.trim()}$`, $options: "i" },
+    }).sort({ createdAt: -1 });
+
+    console.log(`DEBUG: Found ${transactions.length} transactions for userPhone: ${userPhone}`);
 
     return NextResponse.json({ success: true, transactions });
   } catch (error) {
     console.error("Transaction GET error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch transactions", error: error instanceof Error ? error.message : error },
+      {
+        success: false,
+        message: "Failed to fetch transactions",
+        error: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }
 }
 
-// Handle POST (existing transaction processing)
+// Helper function to handle POST requests
 async function handlePost(req: Request) {
   try {
     await connectDB();
@@ -82,6 +94,8 @@ async function handlePost(req: Request) {
       status,
     });
 
+    console.log("DEBUG: Transaction created successfully:", txn);
+
     return NextResponse.json({
       success: true,
       message: "Transaction processed",
@@ -99,7 +113,7 @@ async function handlePost(req: Request) {
   }
 }
 
-// Main handler
+// Main handlers
 export async function GET(req: Request) {
   return handleGet(req);
 }
