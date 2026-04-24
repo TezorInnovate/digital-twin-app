@@ -1,9 +1,23 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export default function Home() {
+  const router = useRouter();
+
   return (
     <main className="p-6 space-y-6">
 
       {/* Header */}
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <button
+          onClick={() => router.push("/scan")}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:opacity-90"
+        >
+          Scan QR
+        </button>
+      </div>
 
       {/* Top Cards */}
       <div className="grid grid-cols-2 gap-6">
@@ -33,7 +47,6 @@ export default function Home() {
           Stock Market Data
         </div>
       </div>
-
     </main>
   );
 }

@@ -7,7 +7,7 @@ import { Html5Qrcode } from "html5-qrcode";
 export default function ScanPage() {
   const [data, setData] = useState<string | null>(null);
   const router = useRouter();
-  const hasScanned = useRef(false); // Prevent multiple scans
+  const hasScanned = useRef(false);
 
   useEffect(() => {
     const scanner = new Html5Qrcode("reader");
@@ -15,12 +15,9 @@ export default function ScanPage() {
     scanner
       .start(
         { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          if (hasScanned.current) return; // Stop duplicate triggers
+          if (hasScanned.current) return;
           hasScanned.current = true;
 
           setData(decodedText);
@@ -29,8 +26,7 @@ export default function ScanPage() {
 
           if (parsed?.upi) {
             try {
-              await scanner.stop(); // Stop camera safely
-
+              await scanner.stop();
               router.push(
                 `/pay?upi=${encodeURIComponent(parsed.upi)}&name=${encodeURIComponent(
                   parsed.name || ""
@@ -41,13 +37,9 @@ export default function ScanPage() {
             }
           }
         },
-        (error) => {
-          // ignore scan errors
-        }
+        (error) => {}
       )
-      .catch((err) => {
-        console.error("Camera start failed:", err);
-      });
+      .catch((err) => console.error("Camera start failed:", err));
 
     return () => {
       scanner.stop().catch(() => {});
@@ -57,10 +49,7 @@ export default function ScanPage() {
   const parseUPI = (qrData: string) => {
     try {
       const url = new URL(qrData);
-      return {
-        upi: url.searchParams.get("pa"),
-        name: url.searchParams.get("pn"),
-      };
+      return { upi: url.searchParams.get("pa"), name: url.searchParams.get("pn") };
     } catch {
       return null;
     }
@@ -70,7 +59,15 @@ export default function ScanPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Scan QR Code</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-bold">Scan QR Code</h1>
+        <button
+          onClick={() => router.push("/")}
+          className="bg-gray-600 text-white px-3 py-1 rounded hover:opacity-90"
+        >
+          Dashboard
+        </button>
+      </div>
 
       <div id="reader" style={{ width: "300px" }} />
 
