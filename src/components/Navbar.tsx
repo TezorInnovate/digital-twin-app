@@ -24,8 +24,9 @@ export default function Navbar() {
       // Sign out from Firebase
       await signOut(auth);
 
-      // Clear local session
-      localStorage.clear();
+      // Only remove user-specific auth/session info
+      // Keep deviceId in localStorage for new device detection
+      localStorage.removeItem("user"); // removes only the logged-in session
 
       // Redirect to login page
       router.push("/login");
