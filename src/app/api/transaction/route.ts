@@ -6,19 +6,45 @@ import { calculateRiskScore } from "@/utils/fraud";
 import { checkUpiFraud } from "@/utils/mlModel";
 import { analyzeUserBehavior } from "@/utils/behavior";
 
-export async function POST(req: Request) {
+// Helper function to handle GET
+async function handleGet(req: Request) {
+  try {
+    await connectDB();
+
+    const url = new URL(req.url);
+    const userPhone = url.searchParams.get("userPhone");
+
+    if (!userPhone) {
+      return NextResponse.json(
+        { success: false, message: "userPhone query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch all transactions for the user
+    const transactions = await Transaction.find({ userPhone }).sort({ createdAt: -1 });
+
+    return NextResponse.json({ success: true, transactions });
+  } catch (error) {
+    console.error("Transaction GET error:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch transactions", error: error instanceof Error ? error.message : error },
+      { status: 500 }
+    );
+  }
+}
+
+// Handle POST (existing transaction processing)
+async function handlePost(req: Request) {
   try {
     await connectDB();
 
     const { userPhone, upi, name, amount, deviceId } = await req.json();
 
-    // Find user by phone
     const user = await User.findOne({ phone: userPhone });
 
-    // Check if device is new for this user
     const isNewDevice = user && !user.devices.includes(deviceId);
 
-    // Count transactions in the last 1 minute
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
     const recentTransactions = await Transaction.countDocuments({
       userPhone,
@@ -29,31 +55,23 @@ export async function POST(req: Request) {
       userPhone,
       upi,
     });
-    
+
     const isFrequent = pastTransactions >= 3;
 
-    // Calculate risk score
     const riskScore = calculateRiskScore({
       amount,
       isNewDevice,
       recentTransactions,
     });
 
-    // ML-based check
     const mlResult = checkUpiFraud(upi);
-
     const behaviorAdjustment = analyzeUserBehavior({ isFrequent });
-
-    // Combine risk
     const finalRiskScore = riskScore + mlResult.mlRisk + behaviorAdjustment;
 
-    // Decide transaction status based on risk
     let status = "SUCCESS";
-
     if (finalRiskScore >= 70) status = "BLOCKED";
     else if (finalRiskScore >= 30) status = "WARNING";
 
-    // Create the transaction
     const txn = await Transaction.create({
       userPhone,
       upi,
@@ -71,7 +89,6 @@ export async function POST(req: Request) {
       riskScore: finalRiskScore,
       mlFraud: mlResult.isFraud,
     });
-
   } catch (error) {
     console.error("Transaction POST error:", error);
     return NextResponse.json({
@@ -80,4 +97,13 @@ export async function POST(req: Request) {
       error: error instanceof Error ? error.message : error,
     });
   }
+}
+
+// Main handler
+export async function GET(req: Request) {
+  return handleGet(req);
+}
+
+export async function POST(req: Request) {
+  return handlePost(req);
 }
