@@ -6,13 +6,13 @@ import { calculateRiskScore } from "@/utils/fraud";
 import { checkUpiFraud } from "@/utils/mlModel";
 import { analyzeUserBehavior } from "@/utils/behavior";
 
-// Helper function to handle GET requests
+// Helper function to handle GET requests (fetch transactions)
 async function handleGet(req: Request) {
   try {
     await connectDB();
 
     const url = new URL(req.url);
-    const userPhone = url.searchParams.get("userPhone");
+    const userPhone = url.searchParams.get("userPhone")?.trim();
 
     console.log("DEBUG: Received GET request for transactions");
     console.log("DEBUG: userPhone query parameter:", userPhone);
@@ -25,14 +25,16 @@ async function handleGet(req: Request) {
       );
     }
 
-    // Robust query: trims whitespace, case-insensitive match
+    // Fetch all transactions for the user, sorted by newest first
     const transactions = await Transaction.find({
-      userPhone: { $regex: `^${userPhone.trim()}$`, $options: "i" },
+      userPhone: { $regex: `^${userPhone}$`, $options: "i" }, // case-insensitive exact match
     }).sort({ createdAt: -1 });
 
     console.log(`DEBUG: Found ${transactions.length} transactions for userPhone: ${userPhone}`);
+    console.log("DEBUG: Transactions data preview:", transactions.slice(0, 5)); // show first 5
 
-    return NextResponse.json({ success: true, transactions });
+    // Ensure always returns an array
+    return NextResponse.json({ success: true, transactions: transactions || [] });
   } catch (error) {
     console.error("Transaction GET error:", error);
     return NextResponse.json(
@@ -46,12 +48,26 @@ async function handleGet(req: Request) {
   }
 }
 
-// Helper function to handle POST requests
+// Helper function to handle POST requests (create transaction)
 async function handlePost(req: Request) {
   try {
     await connectDB();
 
     const { userPhone, upi, name, amount, deviceId } = await req.json();
+
+    if (!userPhone || !upi || !name || !amount || !deviceId) {
+      console.warn("DEBUG: Missing required transaction fields:", {
+        userPhone,
+        upi,
+        name,
+        amount,
+        deviceId,
+      });
+      return NextResponse.json(
+        { success: false, message: "Missing required transaction fields" },
+        { status: 400 }
+      );
+    }
 
     const user = await User.findOne({ phone: userPhone });
 
@@ -113,7 +129,7 @@ async function handlePost(req: Request) {
   }
 }
 
-// Main handlers
+// Export handlers
 export async function GET(req: Request) {
   return handleGet(req);
 }

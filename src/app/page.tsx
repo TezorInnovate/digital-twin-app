@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 type Transaction = {
   name: string;
   amount: number;
-  category: string;
+  category?: string;
   createdAt: string;
 };
 
@@ -19,19 +19,10 @@ export default function Home() {
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
   const [userPhone, setUserPhone] = useState<string | null>(null);
 
-  // Only access localStorage on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Replace this with actual user from localStorage in production
-      // const storedUser = localStorage.getItem("user");
-      // if (storedUser) {
-      //   const parsed = JSON.parse(storedUser);
-      //   console.log("DEBUG: Stored user from localStorage:", parsed);
-      //   setUserPhone(parsed.phone);
-      // } else {
-      //   console.warn("DEBUG: No user found in localStorage");
-      // }
-      setUserPhone("+919773666243"); // hardcoded for testing
+      // Replace with actual localStorage logic in production
+      setUserPhone("+919773666243"); // Hardcoded for testing
     }
   }, []);
 
@@ -45,7 +36,6 @@ export default function Home() {
       try {
         console.log("DEBUG: Fetching transactions for userPhone:", userPhone);
         const res = await fetch(`/api/transaction?userPhone=${userPhone}`);
-
         if (!res.ok) {
           console.error("DEBUG: Fetch failed with status:", res.status);
           return;
@@ -54,20 +44,17 @@ export default function Home() {
         const result = await res.json();
         console.log("DEBUG: transactions fetched from API:", result);
 
-        if (!result.transactions || !Array.isArray(result.transactions)) {
-          console.error("DEBUG: API did not return an array:", result);
-          return;
-        }
+        // Ensure transactions is always an array
+        const data: Transaction[] = Array.isArray(result.transactions) ? result.transactions : [];
+        console.log(`DEBUG: Processed ${data.length} transactions`);
 
-        const data: Transaction[] = result.transactions;
-
-        // Sort transactions by newest first
+        // Sort newest first
         const sortedData = data.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
         setTransactions(sortedData);
 
-        // Calculate balance
+        // Balance
         const bal = data.reduce((acc, txn) => acc + txn.amount, 0);
         setBalance(bal);
         console.log("DEBUG: Calculated balance:", bal);
@@ -134,7 +121,6 @@ export default function Home() {
           <h2 className="text-gray-500 text-sm">Available Balance</h2>
           <p className="text-3xl font-bold mt-2">₹{balance}</p>
         </div>
-
         <div className="bg-white p-6 rounded-2xl shadow-md border">
           <h2 className="text-gray-500 text-sm">Total Spending</h2>
           <p className="text-3xl font-bold mt-2">₹{totalSpending}</p>
