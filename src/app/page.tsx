@@ -7,6 +7,7 @@ type Transaction = {
   name: string;
   amount: number;
   category: string;
+  createdAt: string;
 };
 
 export default function Home() {
@@ -36,7 +37,12 @@ export default function Home() {
         const res = await fetch(`/api/transaction?userPhone=${userPhone}`);
         const data: Transaction[] = await res.json();
 
-        setTransactions(data);
+        // Sort transactions by newest first
+        const sortedData = data.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        setTransactions(sortedData);
 
         // Calculate balance
         const bal = data.reduce((acc, txn) => acc + txn.amount, 0);
@@ -51,8 +57,7 @@ export default function Home() {
         // Top payment names
         const paymentCounts: Record<string, number> = {};
         data.forEach((txn) => {
-          if (!paymentCounts[txn.name]) paymentCounts[txn.name] = 0;
-          paymentCounts[txn.name]++;
+          paymentCounts[txn.name] = (paymentCounts[txn.name] || 0) + 1;
         });
         const top = Object.entries(paymentCounts)
           .sort((a, b) => b[1] - a[1])
@@ -64,8 +69,7 @@ export default function Home() {
         const categoryMap: Record<string, number> = {};
         data.forEach((txn) => {
           const cat = txn.category || "Uncategorized";
-          if (!categoryMap[cat]) categoryMap[cat] = 0;
-          categoryMap[cat] += txn.amount;
+          categoryMap[cat] = (categoryMap[cat] || 0) + txn.amount;
         });
         setCategoryStats(categoryMap);
       } catch (err) {
@@ -128,6 +132,33 @@ export default function Home() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Recent Transactions Table */}
+      <div className="bg-white p-6 rounded-2xl shadow-md border">
+        <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr>
+                <th className="border px-4 py-2">Date</th>
+                <th className="border px-4 py-2">Name</th>
+                <th className="border px-4 py-2">Category</th>
+                <th className="border px-4 py-2">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((txn, idx) => (
+                <tr key={idx}>
+                  <td className="border px-4 py-2">{new Date(txn.createdAt).toLocaleString()}</td>
+                  <td className="border px-4 py-2">{txn.name}</td>
+                  <td className="border px-4 py-2">{txn.category || "Uncategorized"}</td>
+                  <td className="border px-4 py-2">{txn.amount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Lower Section */}
